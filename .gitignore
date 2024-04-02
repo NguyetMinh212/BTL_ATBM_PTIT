@@ -1,0 +1,10 @@
+/desktop.ini
+
+#Dataset
+*.csv
+
+#Ignore intelij files
+.idea/
+
+#Ignore vs code files
+.vscode/
