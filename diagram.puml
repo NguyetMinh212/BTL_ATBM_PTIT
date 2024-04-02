@@ -1,0 +1,24 @@
+@startuml
+!define RECTANGLE class
+
+!theme spacelab
+
+
+
+node "User's Device" as user_device {
+  agent "Standalone Website" as web
+}
+
+cloud {
+  [Backend Server (Django + Gunicorn)] <<localhost:8000>>
+  [nginx] <<spoj.proptit.com>>
+  [nginx-docker] <<localhost:4166>>
+}
+
+
+user_device .up.> [nginx]: Communicate via HTTP 
+[nginx] .up.> [nginx-docker]: Reverse Proxy (via 4166)
+[nginx-docker] .up.> [Backend Server (Django + Gunicorn)]: Reverse Proxy, Serve Static Files, via upstream server 8000
+
+
+@enduml
