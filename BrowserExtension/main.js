@@ -12,7 +12,20 @@
 // The content script will then display a warning message to the user
 
 
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
+    //Inject to html the bubble warning
+    var bubble = document.createElement('div');
+    bubble.id = 'malicious-url-warning';
+    bubble.style.position = 'fixed';
+    bubble.style.bottom = '10px';
+    bubble.style.right = '10px';
+    bubble.style.padding = '10px';
+    bubble.style.backgroundColor = 'red';
+    bubble.style.color = 'white';
+    bubble.style.zIndex = '9999';
+    bubble.style.display = 'none';
+    bubble.innerHTML = 'Warning: This URL is malicious!';
+    document.body.appendChild(bubble);
     console.log('Sending URL to background script...');
     var url = window.location.href;
     //post using fetch
@@ -23,9 +36,16 @@ window.addEventListener('load', function() {
         },
         body: JSON.stringify({ url: url }),
     }).then(response => response.json()).then(data => {
-        console.log(data);
+        console.log(data.data.prediction);
+        if (data.data.prediction == 'bad') {
+            //display warning message
+            document.getElementById('malicious-url-warning').style.display = 'block';
+        }
     }).catch((error) => {
         console.error('Error:', error);
     });
     console.log('URL sent to background script');
 }, false);
+
+
+
