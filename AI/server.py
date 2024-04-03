@@ -12,6 +12,16 @@ predictor = Predictor()
 app.config['PORT'] = 8211
 
 
+#NO CORS
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    return response
+
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     # Generate a unique request ID
@@ -42,4 +52,4 @@ def predict():
     return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=app.config['PORT'])
+    app.run(debug=True, port=app.config['PORT'], host='0.0.0.0')
