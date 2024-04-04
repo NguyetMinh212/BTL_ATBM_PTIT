@@ -27,7 +27,11 @@ window.addEventListener('load', function () {
     bubble.innerHTML = 'Warning: This URL is malicious!';
     document.body.appendChild(bubble);
     console.log('Sending URL to background script...');
-    var url = window.location.href;
+    let url = window.location.href;
+    //strip only get the domain name
+    url = url.split('/')[2];
+
+    console.log(url);
     //post using fetch
     fetch("https://lich.quochung.cyou/predict", {
         method: 'POST',
@@ -47,5 +51,5 @@ window.addEventListener('load', function () {
     console.log('URL sent to background script');
 }, false);
 
-
+//test: http://sharepoint-file-doc.s3-web.jp-tok.cloud-object-storage.appdomain.cloud/
 
