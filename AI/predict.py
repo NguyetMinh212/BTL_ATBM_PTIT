@@ -112,3 +112,4 @@ class Predictor:
         x_predict = x_predict[self.selected_features]
         y_predict = self.loaded_model.predict(x_predict)
         return y_predict[0]
+

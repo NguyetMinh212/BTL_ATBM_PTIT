@@ -3,12 +3,17 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import pickle
 from sklearn.model_selection import GridSearchCV
+import dask.dataframe
+from sklearn.model_selection import StratifiedShuffleSplit
 
 # Prepare data
-train_data = pd.read_csv('train_dataset.csv')
-train_data.head()
-test_data = pd.read_csv('test_dataset.csv')
-test_data.head()
+train_data = dask.dataframe.read_csv('train_dataset.csv')
+
+#print first row with column name and data
+print(train_data.head(1))
+
+
+test_data = dask.dataframe.read_csv('test_dataset.csv')
 print("Loaded dataset")
 print(train_data.shape)
 
@@ -22,13 +27,19 @@ param_grid = {
 
 
 # Select non-string columns for x_train
-x_train = train_data.iloc[:10000, 3:].select_dtypes(exclude=['object']).drop(columns=['url_2bentropy', 'url_3bentropy', 'url_hamming_00', 'url_hamming_01', 'url_hamming_11', 'url_hamming_10'])
+columns_to_drop = ['url_2bentropy', 'url_3bentropy', 'url_hamming_00', 'url_hamming_01', 'url_hamming_11', 'url_hamming_10']
+checked_columns_to_drop = [col for col in columns_to_drop if col in train_data.columns]
+train_data_pd = train_data.head()
+x_train = train_data_pd.iloc[:, 3:].select_dtypes(exclude=['object']).drop(columns=checked_columns_to_drop)
 # Select column 1 for y_train
-y_train = train_data.iloc[:10000, 1]
+y_train = train_data_pd.iloc[:, 1]
 # Select non-string columns for x_test
-x_test = test_data.iloc[:10000, 3:].select_dtypes(exclude=['object']).drop(columns=['url_2bentropy', 'url_3bentropy', 'url_hamming_00', 'url_hamming_01', 'url_hamming_11', 'url_hamming_10'])
+
+checked_columns_to_drop = [col for col in columns_to_drop if col in test_data.columns]
+test_data_pd = test_data.head()
+x_test = test_data_pd.iloc[:, 3:].select_dtypes(exclude=['object']).drop(columns=columns_to_drop)
 # Select column 1 for y_test
-y_test = test_data.iloc[:10000, 1]
+y_test = test_data_pd.iloc[:, 1]
 
 
 #Print out all feature name
@@ -52,7 +63,10 @@ x_test_selected = x_test[selected_features]
 # GridSearchCV is a utility function from sklearn that performs a grid search over specified parameter values for an estimator.
 # It exhaustively generates candidates from a grid of parameter values specified with the param_grid parameter.
 # In this case, the estimator is a RandomForestClassifier and the parameters to search over are defined in the param_grid.
-grid_search = GridSearchCV(RandomForestClassifier(random_state=0), param_grid, cv=5, scoring='f1')
+# Initialize the grid search with StratifiedShuffleSplit
+cv = StratifiedShuffleSplit(n_splits=3, test_size=0.3, random_state=0)
+grid_search = GridSearchCV(RandomForestClassifier(random_state=0), param_grid, cv=cv, scoring='f1')
+
 # Fit the grid search
 grid_search.fit(x_train_selected, y_train)
 # Get the best parameters
