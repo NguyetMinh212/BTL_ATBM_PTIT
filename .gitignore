@@ -4,6 +4,7 @@
 *.csv
 train_dataset.pkl
 test_dataset.pkl
+random_forest_model.pkl
 
 #Ignore intelij files
 .idea/
