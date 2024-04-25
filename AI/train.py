@@ -3,31 +3,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import pickle
 import os
-from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import ExtraTreesClassifier
 
-label_encoder = LabelEncoder()
-
-def convert_to_numeric(df):
-    """
-    Converts all columns in a DataFrame to numeric values using LabelEncoder.
-
-    Parameters:
-    - df (pandas.DataFrame): The DataFrame to convert.
-
-    Returns:
-    - pandas.DataFrame: The DataFrame with all columns converted to numeric values.
-
-    This function iterates over all columns in the DataFrame and applies LabelEncoder.fit_transform() to each column. The converted values are then assigned back to the DataFrame. The function prints a message indicating the number of columns being converted.
-
-    Example usage:
-    ```
-    df = convert_to_numeric(df)
-    ```
-    """
-    print("[Preprocessing] Converting " + str(df.shape[1]) + " columns to numeric")
-    for column in df.columns:
-        df[column] = label_encoder.fit_transform(df[column])
-    return df
 
 
 
@@ -85,12 +62,12 @@ test_data = load_data('test_dataset.csv', pickle_file_test)
 # TRAIN DATA
 
 # Select non-string columns for x_train
-columns_to_drop = ['url_2bentropy', 'url_3bentropy', 'url_hamming_00', 'url_hamming_01', 'url_hamming_11', 'url_hamming_10']
+columns_to_drop = ['url_2bentropy', 'url_3bentropy', 'url_hamming_00', 'url_hamming_01', 'url_hamming_11', 'url_hamming_10', 'tld']
 checked_columns_to_drop = [col for col in columns_to_drop if col in train_data.columns]
-train_data = convert_to_numeric(train_data)
 # Select column 1 for y_train, non-string columns
-x_train = train_data.iloc[:, 3:].select_dtypes(exclude=['object']).drop(columns=checked_columns_to_drop)
+x_train = train_data.iloc[:, 3:].drop(columns=checked_columns_to_drop).select_dtypes(exclude=['object'])
 y_train = train_data.iloc[:, 1]
+
 
 
 
@@ -98,28 +75,37 @@ y_train = train_data.iloc[:, 1]
 
 checked_columns_to_drop = [col for col in columns_to_drop if col in test_data.columns]
 # Select column 1 for y_test, non-string columns
-x_test = test_data.iloc[:, 3:].select_dtypes(exclude=['object']).drop(columns=checked_columns_to_drop)
+x_test = test_data.iloc[:, 3:].drop(columns=checked_columns_to_drop).select_dtypes(exclude=['object'])
 y_test = test_data.iloc[:, 1]
-test_data = convert_to_numeric(test_data)
 
 
-feature_names = x_train.columns.tolist()
-print("[Training] Random forest model training")
 
 
-# Initialize Random Forest classifier
-random_forest = RandomForestClassifier(n_estimators=50, random_state=0)
+print("[Training] Extra Trees model training, getting feature importance scores")
+# Initialize an Extra Trees classifier
+# This will get some feature importance scores for each feature in the dataset first, then use
+# only important features to train the Random Forest model later
+extra_trees = ExtraTreesClassifier(n_jobs=-1, random_state=0)
+
+# Fit the Extra Trees classifier
+extra_trees.fit(x_train, y_train)
+
 # Calculate feature importance scores
-random_forest.fit(x_train, y_train)
-feature_scores = pd.Series(random_forest.feature_importances_, index=x_train.columns).sort_values(ascending=False)
+feature_scores = pd.Series(extra_trees.feature_importances_, index=x_train.columns).sort_values(ascending=False)
+
 # Select the most important features
 threshold = 0.03
 selected_features = feature_scores[feature_scores >= threshold].index.tolist()
-# Filter the training and test data based on selected features
+
+# Filter the training data based on selected features
 x_train_selected = x_train[selected_features]
+
+print("[Training] Random forest model training")
+# Initialize Random Forest classifier
+random_forest = RandomForestClassifier(n_estimators=25, random_state=0, n_jobs=-1)
+random_forest.fit(x_train_selected, y_train)
+
 x_test_selected = x_test[selected_features]
-
-
 
 
 # Make predictions with the new model
