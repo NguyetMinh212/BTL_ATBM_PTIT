@@ -28,8 +28,6 @@ window.addEventListener('load', function () {
     document.body.appendChild(bubble);
     console.log('Sending URL to background script...');
     let url = window.location.href;
-    //strip only get the domain name
-    url = url.split('/')[2];
 
     console.log(url);
     //post using fetch
